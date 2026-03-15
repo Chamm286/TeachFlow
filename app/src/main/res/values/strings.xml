@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">TeachFlow</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">📚 TeachFlow</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Mật khẩu</string>
+    <string name="login_button">Đăng nhập</string>
+    <string name="login_error">Sai email hoặc mật khẩu</string>
+
+    <!-- Class List Screen -->
+    <string name="class_list_title">Lớp học của tôi</string>
+    <string name="empty_class_list">Chưa có lớp học nào</string>
+
+    <!-- Grade Input Screen -->
+    <string name="grade_input_title">Nhập điểm - %s</string>
+    <string name="save_button">Lưu</string>
+    <string name="student_header">Học sinh</string>
+    <string name="no_data">Không có dữ liệu</string>
+
+    <!-- Common -->
+    <string name="academic_year">Năm học: %s</string>
+    <string name="room_schedule">Phòng: %s - %s</string>
+</resources>

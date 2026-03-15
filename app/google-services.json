@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "907736584689",
+    "project_id": "teachflow-67fd1",
+    "storage_bucket": "teachflow-67fd1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:907736584689:android:c9dd4e15ac66b37e807450",
+        "android_client_info": {
+          "package_name": "com.example.teachflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC_gzb0zdTBCuYNkELf_hYD9uvvdPZubk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
