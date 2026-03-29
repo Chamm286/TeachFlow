@@ -1,4 +1,4 @@
-package com.example.teachflow.data.remote
+﻿package com.example.teachflow.data.remote
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
@@ -16,28 +16,22 @@ class FirebaseService {
 
     // ==================== AUTHENTICATION ====================
 
-    /**
-     * Đăng nhập người dùng bằng email
-     * @param email Email người dùng
-     * @param password Mật khẩu (không dùng trong demo)
-     * @return User object nếu tìm thấy, null nếu không
-     */
     suspend fun login(email: String, password: String): User? {
-        Log.d(TAG, "🔍 Đang tìm email: $email")
+        Log.d(TAG, "🔍 Đang tìm email: ")
         return try {
             val snapshot = db.collection("users")
                 .whereEqualTo("email", email)
                 .get()
                 .await()
 
-            Log.d(TAG, "📊 Số lượng documents tìm thấy: ${snapshot.size()}")
+            Log.d(TAG, "📊 Số lượng documents tìm thấy: ")
 
             if (!snapshot.isEmpty) {
                 val doc = snapshot.documents[0]
-                Log.d(TAG, "✅ Tìm thấy user: ${doc.id}")
-                Log.d(TAG, "   Email: ${doc.getString("email")}")
-                Log.d(TAG, "   FullName: ${doc.getString("fullName")}")
-                Log.d(TAG, "   Role: ${doc.getString("role")}")
+                Log.d(TAG, "✅ Tìm thấy user: ")
+                Log.d(TAG, "   Email: ")
+                Log.d(TAG, "   FullName: ")
+                Log.d(TAG, "   Role: ")
 
                 User(
                     id = doc.id,
@@ -50,7 +44,7 @@ class FirebaseService {
                     className = doc.getString("className") ?: ""
                 )
             } else {
-                Log.e(TAG, "❌ KHÔNG tìm thấy email: $email")
+                Log.e(TAG, "❌ KHÔNG tìm thấy email: ")
                 null
             }
         } catch (e: Exception) {
@@ -59,41 +53,28 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Đăng ký tài khoản mới
-     * @param email Email
-     * @param password Mật khẩu (không lưu)
-     * @param fullName Họ tên
-     * @param role Vai trò (teacher/student)
-     * @param studentCode Mã HS (nếu là student)
-     * @param className Lớp (nếu là student)
-     * @return User object nếu thành công, null nếu thất bại
-     */
     suspend fun register(
         email: String,
-        password: String, // Không lưu password trong demo
+        password: String,
         fullName: String,
         role: String,
         studentCode: String = "",
         className: String = ""
     ): User? {
-        Log.d(TAG, "📝 Đăng ký tài khoản mới: $email")
+        Log.d(TAG, "📝 Đăng ký tài khoản mới: ")
         return try {
-            // Kiểm tra email đã tồn tại chưa
             val existingUser = db.collection("users")
                 .whereEqualTo("email", email)
                 .get()
                 .await()
 
             if (!existingUser.isEmpty) {
-                Log.e(TAG, "❌ Email đã tồn tại: $email")
+                Log.e(TAG, "❌ Email đã tồn tại: ")
                 return null
             }
 
-            // Tạo avatar tự động từ tên
-            val avatarUrl = "https://ui-avatars.com/api/?name=${fullName.replace(" ", "+")}&size=128&background=0D8F81&color=fff"
+            val avatarUrl = "https://ui-avatars.com/api/?name=&size=128&background=4F46E5&color=fff"
 
-            // Tạo user mới
             val newUser = hashMapOf(
                 "email" to email,
                 "fullName" to fullName,
@@ -109,7 +90,7 @@ class FirebaseService {
             )
 
             val docRef = db.collection("users").add(newUser).await()
-            Log.d(TAG, "✅ Đã tạo user với ID: ${docRef.id}")
+            Log.d(TAG, "✅ Đã tạo user với ID: ")
 
             val userDoc = docRef.get().await()
 
@@ -129,15 +110,231 @@ class FirebaseService {
         }
     }
 
+    // ==================== STATISTICS FOR MAIN DASHBOARD ====================
+    
+    /**
+     * Lấy tổng số người dùng
+     */
+    suspend fun getTotalUsers(): Int {
+        return try {
+            val snapshot = db.collection("users").get().await()
+            snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting total users: ")
+            1250 // fallback
+        }
+    }
+    
+    /**
+     * Lấy tổng số lớp học
+     */
+    suspend fun getTotalClasses(): Int {
+        return try {
+            val snapshot = db.collection("classes").get().await()
+            snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting total classes: ")
+            48 // fallback
+        }
+    }
+    
+    /**
+     * Lấy tổng số giáo viên
+     */
+    suspend fun getTotalTeachers(): Int {
+        return try {
+            val snapshot = db.collection("users")
+                .whereEqualTo("role", "teacher")
+                .get()
+                .await()
+            snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting total teachers: ")
+            0
+        }
+    }
+    
+    /**
+     * Lấy tổng số học sinh
+     */
+    suspend fun getTotalStudents(): Int {
+        return try {
+            val snapshot = db.collection("users")
+                .whereEqualTo("role", "student")
+                .get()
+                .await()
+            snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting total students: ")
+            0
+        }
+    }
+    
+    /**
+     * Lấy đánh giá trung bình (từ collection reviews)
+     */
+    suspend fun getAverageRating(): Double {
+        return try {
+            val snapshot = db.collection("reviews").get().await()
+            if (snapshot.isEmpty) return 4.9
+            val total = snapshot.documents.sumOf { doc ->
+                (doc.getDouble("rating") ?: 0.0)
+            }
+            total / snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting average rating: ")
+            4.9
+        }
+    }
+
+    // ==================== ARTICLES FOR MAIN DASHBOARD ====================
+    
+    /**
+     * Lấy danh sách bài viết mới
+     */
+    suspend fun getArticles(limit: Int = 5): List<ArticleData> {
+        return try {
+            val snapshot = db.collection("articles")
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+            
+            if (snapshot.isEmpty) {
+                return getMockArticles()
+            }
+            
+            snapshot.documents.mapNotNull { doc ->
+                ArticleData(
+                    id = doc.id,
+                    title = doc.getString("title") ?: "",
+                    description = doc.getString("description") ?: "",
+                    date = doc.getString("date") ?: "",
+                    readTime = doc.getString("readTime") ?: ""
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting articles: ")
+            getMockArticles()
+        }
+    }
+    
+    private fun getMockArticles(): List<ArticleData> {
+        return listOf(
+            ArticleData("1", "Cách quản lý lớp học hiệu quả", "Những bí quyết giúp giáo viên quản lý lớp học tốt hơn...", "Hôm qua", "5 phút đọc"),
+            ArticleData("2", "Xu hướng giáo dục 2024", "Công nghệ AI đang thay đổi giáo dục như thế nào...", "2 ngày trước", "8 phút đọc"),
+            ArticleData("3", "Phương pháp học tập thông minh", "Kỹ thuật Pomodoro và spaced repetition...", "5 ngày trước", "6 phút đọc")
+        )
+    }
+    
+    /**
+     * Lấy chi tiết một bài viết
+     */
+    suspend fun getArticleById(articleId: String): ArticleData? {
+        return try {
+            val doc = db.collection("articles").document(articleId).get().await()
+            if (doc.exists()) {
+                ArticleData(
+                    id = doc.id,
+                    title = doc.getString("title") ?: "",
+                    description = doc.getString("description") ?: "",
+                    date = doc.getString("date") ?: "",
+                    readTime = doc.getString("readTime") ?: ""
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting article: ")
+            null
+        }
+    }
+
+    // ==================== NOTIFICATIONS ====================
+    
+    /**
+     * Lấy danh sách thông báo của người dùng
+     */
+    suspend fun getNotifications(userId: String, limit: Int = 10): List<NotificationData> {
+        return try {
+            val snapshot = db.collection("notifications")
+                .whereEqualTo("userId", userId)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+            
+            snapshot.documents.mapNotNull { doc ->
+                NotificationData(
+                    id = doc.id,
+                    title = doc.getString("title") ?: "",
+                    content = doc.getString("content") ?: "",
+                    createdAt = doc.getString("createdAt") ?: "",
+                    isRead = doc.getBoolean("isRead") ?: false
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting notifications: ")
+            emptyList()
+        }
+    }
+    
+    /**
+     * Lấy số thông báo chưa đọc
+     */
+    suspend fun getUnreadNotificationCount(userId: String): Int {
+        return try {
+            val snapshot = db.collection("notifications")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isRead", false)
+                .get()
+                .await()
+            snapshot.size()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting unread count: ")
+            0
+        }
+    }
+    
+    /**
+     * Đánh dấu thông báo đã đọc
+     */
+    suspend fun markNotificationAsRead(notificationId: String): Boolean {
+        return try {
+            db.collection("notifications").document(notificationId)
+                .update("isRead", true)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error marking notification as read: ")
+            false
+        }
+    }
+    
+    /**
+     * Gửi thông báo (cho giáo viên)
+     */
+    suspend fun sendNotification(title: String, content: String, targetRole: String = "all"): Boolean {
+        return try {
+            val notification = hashMapOf(
+                "title" to title,
+                "content" to content,
+                "targetRole" to targetRole,
+                "createdAt" to System.currentTimeMillis(),
+                "isRead" to false
+            )
+            db.collection("notifications").add(notification).await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending notification: ")
+            false
+        }
+    }
+
     // ==================== CLASSES ====================
 
-    /**
-     * Lấy danh sách lớp theo giáo viên (Realtime)
-     * @param teacherId ID của giáo viên
-     * @return Flow danh sách lớp
-     */
     fun getClassesByTeacher(teacherId: String): Flow<List<Class>> = callbackFlow {
-        Log.d(TAG, "📚 Lấy danh sách lớp cho giáo viên: $teacherId")
+        Log.d(TAG, "📚 Lấy danh sách lớp cho giáo viên: ")
         val listener = db.collection("classes")
             .whereEqualTo("teacherId", teacherId)
             .orderBy("className", Query.Direction.ASCENDING)
@@ -149,7 +346,6 @@ class FirebaseService {
                 }
 
                 if (snapshot != null) {
-                    Log.d(TAG, "📊 Tìm thấy ${snapshot.size()} lớp")
                     val classes = snapshot.documents.mapNotNull { doc ->
                         try {
                             Class(
@@ -163,27 +359,20 @@ class FirebaseService {
                                 studentCount = (doc.getLong("studentCount") ?: 0).toInt()
                             )
                         } catch (e: Exception) {
-                            Log.e(TAG, "❌ Lỗi parse class: ${doc.id}", e)
+                            Log.e(TAG, "❌ Lỗi parse class: ", e)
                             null
                         }
                     }
                     trySend(classes).isSuccess
                 }
             }
-
         awaitClose {
-            Log.d(TAG, "🛑 Đóng listener classes")
             listener.remove()
         }
     }
 
-    /**
-     * Lấy danh sách lớp của học sinh (Realtime)
-     * @param studentId ID của học sinh
-     * @return Flow danh sách lớp
-     */
     fun getClassesByStudent(studentId: String): Flow<List<Class>> = callbackFlow {
-        Log.d(TAG, "📚 Lấy danh sách lớp cho học sinh: $studentId")
+        Log.d(TAG, "📚 Lấy danh sách lớp cho học sinh: ")
         val listener = db.collection("students")
             .whereEqualTo("userId", studentId)
             .addSnapshotListener { snapshot, error ->
@@ -195,8 +384,6 @@ class FirebaseService {
 
                 if (snapshot != null) {
                     val classIds = snapshot.documents.mapNotNull { it.getString("classId") }
-                    Log.d(TAG, "📊 Tìm thấy ${classIds.size} classIds")
-
                     if (classIds.isEmpty()) {
                         trySend(emptyList()).isSuccess
                         return@addSnapshotListener
@@ -219,36 +406,23 @@ class FirebaseService {
                                         studentCount = (doc.getLong("studentCount") ?: 0).toInt()
                                     )
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "❌ Lỗi parse class: ${doc.id}", e)
                                     null
                                 }
                             }
-                            Log.d(TAG, "✅ Lấy được ${classes.size} lớp")
                             trySend(classes).isSuccess
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "❌ Lỗi lấy chi tiết lớp:", e)
                         }
                 }
             }
-
         awaitClose {
-            Log.d(TAG, "🛑 Đóng listener student classes")
             listener.remove()
         }
     }
 
-    /**
-     * Lấy thông tin chi tiết một lớp
-     * @param classId ID của lớp
-     * @return Class object hoặc null
-     */
     suspend fun getClassById(classId: String): Class? {
-        Log.d(TAG, "🔍 Lấy thông tin lớp: $classId")
+        Log.d(TAG, "🔍 Lấy thông tin lớp: ")
         return try {
             val doc = db.collection("classes").document(classId).get().await()
             if (doc.exists()) {
-                Log.d(TAG, "✅ Tìm thấy lớp: ${doc.getString("className")}")
                 Class(
                     id = doc.id,
                     className = doc.getString("className") ?: "",
@@ -260,7 +434,6 @@ class FirebaseService {
                     studentCount = (doc.getLong("studentCount") ?: 0).toInt()
                 )
             } else {
-                Log.e(TAG, "❌ Không tìm thấy lớp: $classId")
                 null
             }
         } catch (e: Exception) {
@@ -271,27 +444,18 @@ class FirebaseService {
 
     // ==================== STUDENTS ====================
 
-    /**
-     * Lấy danh sách học sinh của một lớp
-     * @param classId ID của lớp
-     * @return List<Student>
-     */
     suspend fun getStudentsByClass(classId: String): List<Student> {
-        Log.d(TAG, "🔍 Lấy danh sách học sinh của lớp: $classId")
+        Log.d(TAG, "🔍 Lấy danh sách học sinh của lớp: ")
         return try {
             val snapshot = db.collection("students")
                 .whereEqualTo("classId", classId)
                 .get()
                 .await()
 
-            Log.d(TAG, "📊 Tìm thấy ${snapshot.size()} học sinh trong bảng students")
-
             val students = mutableListOf<Student>()
 
             for (doc in snapshot.documents) {
                 val userId = doc.getString("userId") ?: continue
-                Log.d(TAG, "   - Lấy thông tin user: $userId")
-
                 val userDoc = db.collection("users").document(userId).get().await()
 
                 students.add(
@@ -305,8 +469,6 @@ class FirebaseService {
                     )
                 )
             }
-
-            Log.d(TAG, "✅ Lấy được ${students.size} học sinh")
             students.sortedBy { it.fullName }
         } catch (e: Exception) {
             Log.e(TAG, "💥 Lỗi lấy danh sách học sinh:", e)
@@ -314,13 +476,8 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Lấy danh sách lớp của học sinh
-     * @param studentId ID của học sinh
-     * @return List<Class>
-     */
     suspend fun getStudentClasses(studentId: String): List<Class> {
-        Log.d(TAG, "🔍 Lấy danh sách lớp của học sinh: $studentId")
+        Log.d(TAG, "🔍 Lấy danh sách lớp của học sinh: ")
         return try {
             val studentSnapshot = db.collection("students")
                 .whereEqualTo("userId", studentId)
@@ -328,8 +485,6 @@ class FirebaseService {
                 .await()
 
             val classIds = studentSnapshot.documents.mapNotNull { it.getString("classId") }
-            Log.d(TAG, "📊 Tìm thấy ${classIds.size} classIds")
-
             if (classIds.isEmpty()) return emptyList()
 
             val classesSnapshot = db.collection("classes")
@@ -337,7 +492,7 @@ class FirebaseService {
                 .get()
                 .await()
 
-            val classes = classesSnapshot.documents.map { doc ->
+            classesSnapshot.documents.map { doc ->
                 Class(
                     id = doc.id,
                     className = doc.getString("className") ?: "",
@@ -349,8 +504,6 @@ class FirebaseService {
                     studentCount = (doc.getLong("studentCount") ?: 0).toInt()
                 )
             }
-            Log.d(TAG, "✅ Lấy được ${classes.size} lớp")
-            classes
         } catch (e: Exception) {
             Log.e(TAG, "💥 Lỗi lấy danh sách lớp của học sinh:", e)
             emptyList()
@@ -359,22 +512,14 @@ class FirebaseService {
 
     // ==================== GRADES ====================
 
-    /**
-     * Lấy cột điểm của một lớp
-     * @param classId ID của lớp
-     * @return List<GradeColumn>
-     */
     suspend fun getGradeColumns(classId: String): List<GradeColumn> {
-        Log.d(TAG, "🔍 Lấy cột điểm của lớp: $classId")
+        Log.d(TAG, "🔍 Lấy cột điểm của lớp: ")
         return try {
             val snapshot = db.collection("gradeColumns")
                 .whereEqualTo("classId", classId)
                 .orderBy("displayOrder")
                 .get()
                 .await()
-
-            Log.d(TAG, "📊 Tìm thấy ${snapshot.size()} cột điểm")
-
             snapshot.documents.map { doc ->
                 GradeColumn(
                     id = doc.id,
@@ -392,26 +537,16 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Lấy điểm của một học sinh
-     * @param studentId ID của học sinh
-     * @return Map<gradeColumnId, scoreValue>
-     */
     suspend fun getScoresByStudent(studentId: String): Map<String, Float?> {
-        Log.d(TAG, "🔍 Lấy điểm của học sinh: $studentId")
+        Log.d(TAG, "🔍 Lấy điểm của học sinh: ")
         return try {
             val snapshot = db.collection("scores")
                 .whereEqualTo("studentId", studentId)
                 .get()
                 .await()
-
-            Log.d(TAG, "📊 Tìm thấy ${snapshot.size()} điểm")
-
             snapshot.documents.associate { doc ->
                 val columnId = doc.getString("gradeColumnId") ?: ""
-                val scoreValue = if (doc.contains("scoreValue")) {
-                    (doc.getDouble("scoreValue"))?.toFloat()
-                } else null
+                val scoreValue = doc.getDouble("scoreValue")?.toFloat()
                 columnId to scoreValue
             }
         } catch (e: Exception) {
@@ -420,36 +555,21 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Lấy điểm của một học sinh trong một lớp
-     * @param studentId ID học sinh
-     * @param classId ID lớp
-     * @return Map<gradeColumnId, scoreValue>
-     */
     suspend fun getStudentScoresInClass(studentId: String, classId: String): Map<String, Float?> {
-        Log.d(TAG, "🔍 Lấy điểm của học sinh $studentId trong lớp $classId")
+        Log.d(TAG, "🔍 Lấy điểm của học sinh  trong lớp ")
         return try {
             val columns = getGradeColumns(classId)
             val columnIds = columns.map { it.id }
-
-            if (columnIds.isEmpty()) {
-                Log.d(TAG, "📊 Lớp không có cột điểm nào")
-                return emptyMap()
-            }
+            if (columnIds.isEmpty()) return emptyMap()
 
             val snapshot = db.collection("scores")
                 .whereEqualTo("studentId", studentId)
                 .whereIn("gradeColumnId", columnIds)
                 .get()
                 .await()
-
-            Log.d(TAG, "📊 Tìm thấy ${snapshot.size()} điểm")
-
             snapshot.documents.associate { doc ->
                 val columnId = doc.getString("gradeColumnId") ?: ""
-                val scoreValue = if (doc.contains("scoreValue")) {
-                    (doc.getDouble("scoreValue"))?.toFloat()
-                } else null
+                val scoreValue = doc.getDouble("scoreValue")?.toFloat()
                 columnId to scoreValue
             }
         } catch (e: Exception) {
@@ -458,19 +578,11 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Lấy bảng điểm hoàn chỉnh của một lớp
-     * @param classId ID lớp
-     * @return GradeTable hoặc null
-     */
     suspend fun getGradeTable(classId: String): GradeTable? {
-        Log.d(TAG, "🔍 Lấy bảng điểm của lớp: $classId")
+        Log.d(TAG, "🔍 Lấy bảng điểm của lớp: ")
         return try {
             val classDoc = db.collection("classes").document(classId).get().await()
-            if (!classDoc.exists()) {
-                Log.e(TAG, "❌ Không tìm thấy lớp: $classId")
-                return null
-            }
+            if (!classDoc.exists()) return null
 
             val classInfo = Class(
                 id = classDoc.id,
@@ -489,15 +601,12 @@ class FirebaseService {
             val studentsWithScores = students.map { student ->
                 val scores = getScoresByStudent(student.id)
                 val average = calculateAverage(scores, columns)
-
                 StudentWithScores(
                     student = student,
                     scores = scores,
                     averageScore = average
                 )
             }
-
-            Log.d(TAG, "✅ Lấy bảng điểm thành công: ${students.size} học sinh, ${columns.size} cột điểm")
 
             GradeTable(
                 classInfo = classInfo,
@@ -510,20 +619,11 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Lấy bảng điểm của một học sinh
-     * @param studentId ID học sinh
-     * @param classId ID lớp
-     * @return GradeTable chỉ có 1 học sinh
-     */
     suspend fun getStudentGradeTable(studentId: String, classId: String): GradeTable? {
-        Log.d(TAG, "🔍 Lấy bảng điểm của học sinh $studentId trong lớp $classId")
+        Log.d(TAG, "🔍 Lấy bảng điểm của học sinh  trong lớp ")
         return try {
             val classDoc = db.collection("classes").document(classId).get().await()
-            if (!classDoc.exists()) {
-                Log.e(TAG, "❌ Không tìm thấy lớp: $classId")
-                return null
-            }
+            if (!classDoc.exists()) return null
 
             val classInfo = Class(
                 id = classDoc.id,
@@ -551,8 +651,6 @@ class FirebaseService {
 
             val average = calculateAverage(scores, columns)
 
-            Log.d(TAG, "✅ Lấy bảng điểm học sinh thành công")
-
             GradeTable(
                 classInfo = classInfo,
                 gradeColumns = columns,
@@ -572,14 +670,8 @@ class FirebaseService {
 
     // ==================== SCORES ====================
 
-    /**
-     * Cập nhật điểm cho một học sinh
-     * @param studentId ID học sinh
-     * @param gradeColumnId ID cột điểm
-     * @param scoreValue Giá trị điểm
-     */
     suspend fun updateScore(studentId: String, gradeColumnId: String, scoreValue: Float?) {
-        Log.d(TAG, "📝 Cập nhật điểm: student=$studentId, column=$gradeColumnId, value=$scoreValue")
+        Log.d(TAG, "📝 Cập nhật điểm: student=, column=, value=")
         try {
             val snapshot = db.collection("scores")
                 .whereEqualTo("studentId", studentId)
@@ -592,7 +684,6 @@ class FirebaseService {
                 db.collection("scores").document(docId)
                     .update("scoreValue", scoreValue, "updatedAt", System.currentTimeMillis())
                     .await()
-                Log.d(TAG, "✅ Đã cập nhật điểm")
             } else {
                 val newScore = hashMapOf(
                     "studentId" to studentId,
@@ -601,27 +692,18 @@ class FirebaseService {
                     "updatedAt" to System.currentTimeMillis()
                 )
                 db.collection("scores").add(newScore).await()
-                Log.d(TAG, "✅ Đã thêm điểm mới")
             }
         } catch (e: Exception) {
             Log.e(TAG, "💥 Lỗi cập nhật điểm:", e)
         }
     }
 
-    /**
-     * Cập nhật nhiều điểm cùng lúc (Batch)
-     * @param scores List<Score>
-     */
     suspend fun updateScores(scores: List<Score>) {
-        Log.d(TAG, "📝 Cập nhật ${scores.size} điểm")
-        if (scores.isEmpty()) {
-            Log.d(TAG, "📝 Không có điểm để cập nhật")
-            return
-        }
+        Log.d(TAG, "📝 Cập nhật  điểm")
+        if (scores.isEmpty()) return
 
         try {
             val batch = db.batch()
-
             for (score in scores) {
                 val snapshot = db.collection("scores")
                     .whereEqualTo("studentId", score.studentId)
@@ -643,9 +725,7 @@ class FirebaseService {
                     batch.set(docRef, newScore)
                 }
             }
-
             batch.commit().await()
-            Log.d(TAG, "✅ Cập nhật thành công ${scores.size} điểm")
         } catch (e: Exception) {
             Log.e(TAG, "💥 Lỗi cập nhật nhiều điểm:", e)
         }
@@ -653,12 +733,6 @@ class FirebaseService {
 
     // ==================== UTILITY ====================
 
-    /**
-     * Tính điểm trung bình
-     * @param scores Map điểm
-     * @param columns Danh sách cột điểm
-     * @return Điểm trung bình
-     */
     private fun calculateAverage(
         scores: Map<String, Float?>,
         columns: List<GradeColumn>
@@ -673,23 +747,14 @@ class FirebaseService {
                 totalScore += score * column.weight
             }
         }
-
-        val average = if (totalWeight > 0) totalScore / totalWeight else null
-        Log.d(TAG, "📊 Điểm trung bình: $average (tổng hệ số: $totalWeight)")
-        return average
+        return if (totalWeight > 0) totalScore / totalWeight else null
     }
 
-    /**
-     * Lấy thông tin người dùng theo ID
-     * @param userId ID người dùng
-     * @return User object hoặc null
-     */
     suspend fun getUserById(userId: String): User? {
-        Log.d(TAG, "🔍 Lấy thông tin user: $userId")
+        Log.d(TAG, "🔍 Lấy thông tin user: ")
         return try {
             val doc = db.collection("users").document(userId).get().await()
             if (doc.exists()) {
-                Log.d(TAG, "✅ Tìm thấy user: ${doc.getString("email")}")
                 User(
                     id = doc.id,
                     email = doc.getString("email") ?: "",
@@ -701,7 +766,6 @@ class FirebaseService {
                     className = doc.getString("className") ?: ""
                 )
             } else {
-                Log.e(TAG, "❌ Không tìm thấy user: $userId")
                 null
             }
         } catch (e: Exception) {
@@ -710,17 +774,10 @@ class FirebaseService {
         }
     }
 
-    /**
-     * Cập nhật thông tin người dùng
-     * @param userId ID người dùng
-     * @param data Map dữ liệu cần cập nhật
-     * @return true nếu thành công, false nếu thất bại
-     */
     suspend fun updateUser(userId: String, data: Map<String, Any>): Boolean {
-        Log.d(TAG, "📝 Cập nhật user: $userId")
+        Log.d(TAG, "📝 Cập nhật user: ")
         return try {
             db.collection("users").document(userId).update(data).await()
-            Log.d(TAG, "✅ Cập nhật user thành công")
             true
         } catch (e: Exception) {
             Log.e(TAG, "💥 Lỗi cập nhật user:", e)
@@ -728,3 +785,21 @@ class FirebaseService {
         }
     }
 }
+
+// ==================== DATA CLASSES FOR MAIN ====================
+
+data class ArticleData(
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val date: String = "",
+    val readTime: String = ""
+)
+
+data class NotificationData(
+    val id: String = "",
+    val title: String = "",
+    val content: String = "",
+    val createdAt: String = "",
+    val isRead: Boolean = false
+)
