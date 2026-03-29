@@ -1,68 +1,46 @@
-package com.example.teachflow.ui.auth.register
+﻿package com.example.teachflow.ui.auth.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.teachflow.data.model.User
 import com.example.teachflow.data.remote.FirebaseService
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
 
 class RegisterViewModel : ViewModel() {
     private val firebaseService = FirebaseService()
-    private val _uiState = MutableStateFlow(RegisterUiState())
-    val uiState: StateFlow<RegisterUiState> = _uiState
 
     fun register(
-        email: String,
-        password: String,
-        fullName: String,
+        name: String, 
+        email: String, 
+        password: String, 
         role: String,
-        studentCode: String = "",
-        className: String = ""
+        onResult: (Boolean, String?) -> Unit
     ) {
         viewModelScope.launch {
-            Log.d("REGISTER_DEBUG", "📝 Đang đăng ký với email: $email")
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-
-            // Kiểm tra mật khẩu xác nhận
-            // (Việc này nên làm ở UI nhưng check lại ở đây)
-
-            val user = firebaseService.register(
-                email = email,
-                password = password,
-                fullName = fullName,
-                role = role,
-                studentCode = studentCode,
-                className = className
-            )
-
-            if (user != null) {
-                Log.d("REGISTER_DEBUG", "✅ Đăng ký thành công: ${user.id} - ${user.role}")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isSuccess = true,
-                    user = user
+            Log.d("REGISTER_DEBUG", "📝 Đang đăng ký với email: , role: ")
+            
+            try {
+                // Sửa đúng thứ tự tham số: email, password, fullName, role
+                val user = firebaseService.register(
+                    email = email,
+                    password = password,
+                    fullName = name,
+                    role = role,
+                    studentCode = "",
+                    className = ""
                 )
-            } else {
-                Log.e("REGISTER_DEBUG", "❌ Đăng ký thất bại - email đã tồn tại")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = "Email đã tồn tại"
-                )
+                
+                if (user != null) {
+                    Log.d("REGISTER_DEBUG", "✅ Đăng ký thành công với email: ")
+                    onResult(true, null)
+                } else {
+                    Log.e("REGISTER_DEBUG", "❌ Đăng ký thất bại - user null")
+                    onResult(false, "Đăng ký thất bại, email có thể đã tồn tại")
+                }
+            } catch (e: Exception) {
+                Log.e("REGISTER_DEBUG", "❌ Lỗi đăng ký: ")
+                onResult(false, "Có lỗi xảy ra: ")
             }
         }
     }
-
-    fun resetState() {
-        _uiState.value = RegisterUiState()
-    }
 }
-
-data class RegisterUiState(
-    val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val error: String? = null,
-    val user: User? = null
-)
