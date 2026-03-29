@@ -2,23 +2,23 @@
     <string name="app_name">TeachFlow</string>
 
     <!-- Login Screen -->
-    <string name="login_title">📚 TeachFlow</string>
+    <string name="login_title">ðŸ“š TeachFlow</string>
     <string name="email_hint">Email</string>
-    <string name="password_hint">Mật khẩu</string>
-    <string name="login_button">Đăng nhập</string>
-    <string name="login_error">Sai email hoặc mật khẩu</string>
+    <string name="password_hint">Máº­t kháº©u</string>
+    <string name="login_button">ÄÄƒng nháº­p</string>
+    <string name="login_error">Sai email hoáº·c máº­t kháº©u</string>
 
     <!-- Class List Screen -->
-    <string name="class_list_title">Lớp học của tôi</string>
-    <string name="empty_class_list">Chưa có lớp học nào</string>
+    <string name="class_list_title">Lá»›p há»c cá»§a tÃ´i</string>
+    <string name="empty_class_list">ChÆ°a cÃ³ lá»›p há»c nÃ o</string>
 
     <!-- Grade Input Screen -->
-    <string name="grade_input_title">Nhập điểm - %s</string>
-    <string name="save_button">Lưu</string>
-    <string name="student_header">Học sinh</string>
-    <string name="no_data">Không có dữ liệu</string>
+    <string name="grade_input_title">Nháº­p Ä‘iá»ƒm - %s</string>
+    <string name="save_button">LÆ°u</string>
+    <string name="student_header">Há»c sinh</string>
+    <string name="no_data">KhÃ´ng cÃ³ dá»¯ liá»‡u</string>
 
     <!-- Common -->
-    <string name="academic_year">Năm học: %s</string>
-    <string name="room_schedule">Phòng: %s - %s</string>
+    <string name="academic_year">NÄƒm há»c: %s</string>
+    <string name="room_schedule" formatted="false">PhÃ²ng: %s - %s</string>
 </resources>
