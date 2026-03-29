@@ -4,239 +4,267 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
-import com.example.teachflow.ui.components.StatCard
-import com.example.teachflow.ui.components.ClassCard
-import com.example.teachflow.ui.theme.Primary
-import com.example.teachflow.ui.theme.StudentColor
-import com.example.teachflow.ui.theme.TeacherColor
+import androidx.navigation.NavController
+import com.example.teachflow.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeacherDashboard(
-    teacherId: String,
-    onLogout: () -> Unit,
-    onNavigateToClasses: () -> Unit,
-    onNavigateToGrade: () -> Unit,
-    onNavigateToStatistics: () -> Unit
+    navController: NavController
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .width(300.dp)
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                Box(
+    val greeting = remember {
+        when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
+            in 0..11 -> "Chào buổi sáng"
+            in 12..13 -> "Chào buổi trưa"
+            in 14..17 -> "Chào buổi chiều"
+            else -> "Chào buổi tối"
+        }
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = ", Thầy Hoàn!",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Giáo viên chủ nhiệm",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Thông báo", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Primary
+                )
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(BackgroundLight),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Welcome Card
+            item {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
-                        .background(Primary)
+                        .height(120.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .background(
+                                Brush.horizontalGradient(PrimaryGradient)
+                            )
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(Color.White)
+                        Column(
+                            modifier = Modifier.padding(20.dp)
                         ) {
                             Text(
-                                text = "👨‍🏫",
-                                fontSize = 40.sp,
-                                modifier = Modifier.align(Alignment.Center)
+                                text = "👋 Chào mừng đến với TeachFlow!",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Hôm nay bạn có 3 lớp học",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.9f)
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Nguyễn Văn An",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Giáo viên Toán",
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 14.sp
-                        )
                     }
                 }
-                
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
-                    label = { Text("Tổng quan") },
-                    selected = true,
-                    onClick = { scope.launch { drawerState.close() } },
-                    modifier = Modifier.padding(horizontal = 12.dp)
+            }
+            
+            // Stats Row
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TeacherStatCard(
+                        title = "Lớp học",
+                        value = "4",
+                        icon = Icons.Default.School,
+                        color = Primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TeacherStatCard(
+                        title = "Học sinh",
+                        value = "156",
+                        icon = Icons.Default.People,
+                        color = Success,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TeacherStatCard(
+                        title = "Bài tập",
+                        value = "23",
+                        icon = Icons.Default.Assignment,
+                        color = Warning,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            
+            // Today's Classes
+            item {
+                Text(
+                    text = "Lớp học hôm nay",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Class, contentDescription = null) },
-                    label = { Text("Lớp học") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToClasses()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Grade, contentDescription = null) },
-                    label = { Text("Nhập điểm") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToGrade()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.BarChart, contentDescription = null) },
-                    label = { Text("Thống kê") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToStatistics()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Logout, contentDescription = null) },
-                    label = { Text("Đăng xuất") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onLogout()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
+            }
+            
+            items(listOf(
+                ClassItem("12A1", "Toán", "Tiết 1-3", "Phòng 201"),
+                ClassItem("12A2", "Lý", "Tiết 4-5", "Phòng 203"),
+                ClassItem("11B1", "Hóa", "Tiết 6-7", "Phòng 105")
+            )) { classItem ->
+                ClassCard(classItem)
             }
         }
+    }
+}
+
+@Composable
+fun TeacherStatCard(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("TeachFlow") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Thông báo")
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                color = TextSecondary
+            )
+        }
+    }
+}
+
+data class ClassItem(
+    val className: String,
+    val subject: String,
+    val time: String,
+    val room: String
+)
+
+@Composable
+fun ClassCard(classItem: ClassItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Primary.copy(alpha = 0.1f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Xin chào, 👋",
-                                    fontSize = 14.sp,
-                                    color = Primary
-                                )
-                                Text(
-                                    text = "Nguyễn Văn An",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Icon(
-                                Icons.Default.WavingHand,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
-                    }
-                }
-                
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            icon = Icons.Default.Class,
-                            title = "Lớp học",
-                            value = "3",
-                            color = TeacherColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            icon = Icons.Default.People,
-                            title = "Học sinh",
-                            value = "98",
-                            color = StudentColor,
-                            modifier = Modifier.weight(1f)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Primary.copy(alpha = 0.1f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = classItem.className.take(2),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Primary
                         )
                     }
                 }
                 
-                item {
+                Column {
                     Text(
-                        text = "Lớp học gần đây",
-                        fontSize = 18.sp,
+                        text = classItem.className,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = " • ",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Text(
+                        text = "📍 ",
+                        fontSize = 11.sp,
+                        color = TextHint
                     )
                 }
-                
-                items(
-                    listOf(
-                        Triple("10A1", "Toán", "35 HS"),
-                        Triple("10A2", "Toán", "38 HS"),
-                        Triple("11B1", "Toán", "32 HS")
-                    )
-                ) { (className, subject, count) ->
-                    ClassCard(
-                        className = className,
-                        subject = subject,
-                        studentCount = count,
-                        onClick = onNavigateToClasses
-                    )
-                }
+            }
+            
+            IconButton(onClick = { }) {
+                Icon(Icons.Default.ChevronRight, contentDescription = null)
             }
         }
     }
