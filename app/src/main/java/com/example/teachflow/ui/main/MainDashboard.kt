@@ -1,6 +1,7 @@
 ﻿package com.example.teachflow.ui.main
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -353,8 +354,11 @@ fun HomeTab(
                         fontSize = 14.sp,
                         color = Color.White.copy(alpha = 0.85f)
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Hai nút Đăng nhập và Đăng ký bằng nhau
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
@@ -362,6 +366,7 @@ fun HomeTab(
                                 navController.navigate("welcome")
                                 showSnackbar("🔐 Chuyển sang trang đăng nhập")
                             },
+                            modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.White,
@@ -370,17 +375,22 @@ fun HomeTab(
                         ) {
                             Text("Đăng nhập", fontWeight = FontWeight.Bold)
                         }
+                        
+                        // Nút Đăng ký với màu sắc hợp lý (Trắng mờ có viền)
                         OutlinedButton(
                             onClick = { 
                                 navController.navigate("register")
                                 showSnackbar("📝 Chuyển sang trang đăng ký")
                             },
+                            modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.dp, Color.White),
                             colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.White.copy(alpha = 0.15f),
                                 contentColor = Color.White
                             )
                         ) {
-                            Text("Đăng ký miễn phí")
+                            Text("Đăng ký", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
