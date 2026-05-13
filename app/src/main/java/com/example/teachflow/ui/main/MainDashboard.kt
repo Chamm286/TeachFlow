@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.pager.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
@@ -46,14 +47,16 @@ val DarkTextPrimary = Color(0xFFFFFFFF)
 val DarkTextSecondary = Color(0xFFB0B0B0)
 val DarkTextHint = Color(0xFF757575)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainDashboard(
     navController: NavController,
     viewModel: MainViewModel = viewModel(),
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
-    var selectedItem by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { 5 })
+    
     var showNotificationDialog by remember { mutableStateOf(false) }
     var showSnackbarMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -170,22 +173,24 @@ fun MainDashboard(
                 
                 navItems.forEachIndexed { index, item ->
                     NavigationBarItem(
-                        selected = selectedItem == index,
+                        selected = pagerState.currentPage == index,
                         onClick = { 
-                            selectedItem = index
-                            showSnackbar("📱 Đã chuyển sang ")
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                            showSnackbar("📱 Đã chuyển sang ${item.title}")
                         },
                         icon = {
                             Icon(
-                                if (selectedItem == index) item.selectedIcon else item.icon,
+                                if (pagerState.currentPage == index) item.selectedIcon else item.icon,
                                 contentDescription = item.title,
-                                tint = if (selectedItem == index) primaryColor else textHintColor
+                                tint = if (pagerState.currentPage == index) primaryColor else textHintColor
                             )
                         },
                         label = {
                             Text(
                                 item.title,
-                                color = if (selectedItem == index) primaryColor else textHintColor,
+                                color = if (pagerState.currentPage == index) primaryColor else textHintColor,
                                 fontSize = 11.sp
                             )
                         },
@@ -203,71 +208,77 @@ fun MainDashboard(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = backgroundColor
     ) { paddingValues ->
-        when (selectedItem) {
-            0 -> HomeTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                stats = stats,
-                articles = articles,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            1 -> ExploreTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            2 -> FeaturesTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            3 -> ProfileTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar,
-                settingsViewModel = settingsViewModel
-            )
-            4 -> MoreTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar,
-                settingsViewModel = settingsViewModel
-            )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(0.dp)
+        ) { pageIndex ->
+            when (pageIndex) {
+                0 -> HomeTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    stats = stats,
+                    articles = articles,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                1 -> ExploreTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                2 -> FeaturesTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                3 -> ProfileTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar,
+                    settingsViewModel = settingsViewModel
+                )
+                4 -> MoreTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar,
+                    settingsViewModel = settingsViewModel
+                )
+            }
         }
     }
     
