@@ -6,29 +6,34 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
 
 class ChatRepository(private val firestore: FirebaseFirestore) {
 
-    // Lắng nghe tin nhắn Realtime từ Firestore
-    fun getMessages(chatRoomId: String): Flow<List<Message>> = callbackFlow {
-        val snapshotListener = firestore.collection("chat_rooms")
-            .document(chatRoomId)
+    // 1. Hàm lắng nghe tin nhắn Realtime
+    fun getMessages(roomId: String): Flow<List<Message>> = callbackFlow {
+        val listener = firestore.collection("chats")
+            .document(roomId)
             .collection("messages")
+            // Sắp xếp giảm dần để tin nhắn mới nhất nằm trên cùng danh sách (phù hợp với reverseLayout)
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                val messages = snapshot?.toObjects(Message::class.java) ?: emptyList()
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val messages = snapshot?.documents?.mapNotNull { it.toObject(Message::class.java) } ?: emptyList()
                 trySend(messages)
             }
-        awaitClose { snapshotListener.remove() }
+
+        // Hủy lắng nghe khi thoát màn hình chat
+        awaitClose { listener.remove() }
     }
 
-    suspend fun sendMessage(chatRoomId: String, message: Message) {
-        firestore.collection("chat_rooms")
-            .document(chatRoomId)
+    // 2. Hàm gửi tin nhắn
+    fun sendMessage(roomId: String, message: Message) {
+        firestore.collection("chats")
+            .document(roomId)
             .collection("messages")
             .add(message)
-            .await()
     }
 }

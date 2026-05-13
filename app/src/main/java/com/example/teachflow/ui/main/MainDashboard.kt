@@ -475,7 +475,20 @@ fun HomeTab(
                         surfaceColor = surfaceColor,
                         textPrimaryColor = textPrimaryColor,
                         primaryColor = primaryColor,
-                        onClick = { showSnackbar("📱 Đang chuyển đến ") }
+                        onClick = {
+                            if (category.name == "Tin nhắn") {
+                                // Tạm thời truyền cứng ID của Đức để test tính năng chat 1-1
+                                navController.navigate(
+                                    Screen.Chat.createRoute(
+                                        partnerUserId = "uid_cua_duc",
+                                        partnerName = "Nguyễn Công Đức"
+                                    )
+                                )
+                            } else {
+                                // Các nút khác vẫn hiện thông báo như cũ
+                                showSnackbar("📱 Đang chuyển đến ${category.name}")
+                            }
+                        }
                     )
                 }
             }
@@ -1157,8 +1170,16 @@ fun FeaturesTab(
                 textPrimaryColor = textPrimaryColor,
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
-                onClick = { 
-                    if (feature.isPremium) {
+                onClick = {
+                    if (feature.title == "Chat trực tuyến") {
+                        navController.navigate(
+                            Screen.Chat.createRoute(
+                                partnerUserId = "uid_cua_duc",
+                                partnerName = "Nguyễn Công Đức"
+                            )
+                        )
+                    }
+                    else if (feature.isPremium) {
                         showSnackbar("⭐ Tính năng Premium:  - Vui lòng nâng cấp tài khoản")
                     } else if (feature.isNew) {
                         showSnackbar("✨ Tính năng mới:  - Đang trong giai đoạn thử nghiệm")

@@ -27,4 +27,11 @@ sealed class Screen(val route: String) {
     object TeacherClasses : Screen("teacher_classes")
     object TeacherGradeInput : Screen("teacher_grade_input")
     object TeacherStatistics : Screen("teacher_statistics")
+
+    // Chat
+    object Chat : Screen("chat_screen/{partnerUserId}/{partnerName}") {
+        fun createRoute(partnerUserId: String, partnerName: String): String {
+            return "chat_screen/$partnerUserId/$partnerName"
+        }
+    }
 }

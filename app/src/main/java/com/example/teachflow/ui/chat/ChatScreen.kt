@@ -21,23 +21,24 @@ import com.example.teachflow.data.model.Message
 fun ChatScreen(
     navController: NavController,
     chatViewModel: ChatViewModel,
-    chatRoomId: String,
-    currentUserId: String,
-    currentUserName: String,
-    currentUserRole: String
+    myUserId: String,       // ID của tài khoản đang đăng nhập
+    partnerUserId: String,  // ID của người mình đang muốn chat cùng
+    partnerName: String     // Tên người kia để hiển thị lên thanh tiêu đề
 ) {
     val messages by chatViewModel.messages.collectAsState()
     var textState by remember { mutableStateOf("") }
 
-    // Tự động load tin nhắn khi vào phòng
-    LaunchedEffect(chatRoomId) {
-        chatViewModel.loadMessages(chatRoomId)
+    // Tự động tạo roomId và tải tin nhắn
+    val roomId = remember { chatViewModel.getRoomId(myUserId, partnerUserId) }
+
+    LaunchedEffect(roomId) {
+        chatViewModel.loadMessages(roomId)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thảo luận: $chatRoomId") },
+                title = { Text(partnerName) }, // Hiện tên người chat cùng
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -46,10 +47,12 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            // Thanh nhập liệu tích hợp đẩy bàn phím
             Surface(tonalElevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
                 Row(
-                    modifier = Modifier.padding(8.dp).navigationBarsPadding().imePadding(),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .navigationBarsPadding()
+                        .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextField(
@@ -67,7 +70,7 @@ fun ChatScreen(
                     FloatingActionButton(
                         onClick = {
                             if (textState.isNotBlank()) {
-                                chatViewModel.sendMessage(chatRoomId, textState, currentUserId, currentUserName, currentUserRole)
+                                chatViewModel.sendMessage(roomId, textState, myUserId)
                                 textState = ""
                             }
                         },
@@ -81,33 +84,46 @@ fun ChatScreen(
         }
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 8.dp),
-            reverseLayout = true // Tin nhắn mới nhất nằm dưới
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 12.dp),
+            reverseLayout = true // Lật ngược danh sách để tin nhắn mới trồi lên từ dưới
         ) {
             items(messages) { message ->
-                MessageItem(message = message, isMine = message.senderId == currentUserId)
+                MessageBubble(message = message, isMine = message.senderId == myUserId)
             }
         }
     }
 }
 
 @Composable
-fun MessageItem(message: Message, isMine: Boolean) {
+fun MessageBubble(message: Message, isMine: Boolean) {
     val alignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart
-    val color = if (isMine) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+    val bubbleColor = if (isMine) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (isMine) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), contentAlignment = alignment) {
-        Column(horizontalAlignment = if (isMine) Alignment.End else Alignment.Start) {
-            if (!isMine) {
-                Text(text = message.senderName, style = MaterialTheme.typography.labelSmall)
-            }
-            Surface(
-                color = color,
-                shape = RoundedCornerShape(12.dp),
-                shadowElevation = 1.dp
-            ) {
-                Text(text = message.content, modifier = Modifier.padding(12.dp))
-            }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        contentAlignment = alignment
+    ) {
+        Surface(
+            color = bubbleColor,
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (isMine) 16.dp else 4.dp,
+                bottomEnd = if (isMine) 4.dp else 16.dp
+            ),
+            shadowElevation = 1.dp
+        ) {
+            Text(
+                text = message.content,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                color = textColor
+            )
         }
     }
 }

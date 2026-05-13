@@ -8,30 +8,38 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ChatViewModel(private val repository: ChatRepository) : ViewModel() { // "Xài" ở đây
+class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages = _messages.asStateFlow()
 
-    fun loadMessages(chatRoomId: String) {
+    fun loadMessages(roomId: String) {
         viewModelScope.launch {
-            // Gọi hàm getMessages từ Repository để hứng Flow tin nhắn
-            repository.getMessages(chatRoomId).collect { list ->
+            repository.getMessages(roomId).collect { list ->
                 _messages.value = list
             }
         }
     }
 
-    fun sendMessage(chatRoomId: String, content: String, senderId: String, senderName: String, role: String) {
+    fun sendMessage(roomId: String, content: String, senderId: String) {
+        if (content.isBlank()) return
+
         val msg = Message(
             senderId = senderId,
-            senderName = senderName,
             content = content,
-            senderRole = role
+            timestamp = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            // Gọi hàm gửi tin nhắn của Repository
-            repository.sendMessage(chatRoomId, msg)
+            repository.sendMessage(roomId, msg)
+        }
+    }
+
+    // Thuật toán tạo ID Phòng Chat duy nhất cho 2 người (Rất Quan Trọng)
+    fun getRoomId(userId1: String, userId2: String): String {
+        return if (userId1 < userId2) {
+            "${userId1}_$userId2"
+        } else {
+            "${userId2}_$userId1"
         }
     }
 }
