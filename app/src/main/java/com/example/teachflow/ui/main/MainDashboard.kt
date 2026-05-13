@@ -168,7 +168,7 @@ fun MainDashboard(
                     NavItem("Khám phá", Icons.Rounded.Explore, Icons.Rounded.Explore),
                     NavItem("Tính năng", Icons.Rounded.Widgets, Icons.Rounded.Widgets),
                     NavItem("Cá nhân", Icons.Rounded.PersonOutline, Icons.Rounded.Person),
-                    NavItem("Khác", Icons.Rounded.MoreHoriz, Icons.Rounded.MoreHoriz)
+                    NavItem("Khác", Icons.Rounded.GridView, Icons.Rounded.GridView)
                 )
                 
                 navItems.forEachIndexed { index, item ->
@@ -1569,7 +1569,7 @@ fun MoreTab(
     ) {
         item {
             Text(
-                text = "📌 Tiện ích",
+                text = "Tiện ích mở rộng",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = textPrimaryColor,
@@ -1591,7 +1591,7 @@ fun MoreTab(
         
         item {
             Text(
-                text = "❤️ Hỗ trợ",
+                text = "Hỗ trợ & Thông tin",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = textPrimaryColor,
@@ -1633,23 +1633,24 @@ fun MoreTab(
 }
 
 data class UtilityItem(
-    val icon: String,
+    val icon: ImageVector,
+    val color: Color,
     val title: String,
     val description: String,
     val route: String? = null
 )
 
 val utilities = listOf(
-    UtilityItem("📱", "Chia sẻ ứng dụng", "Giới thiệu TeachFlow cho bạn bè"),
-    UtilityItem("⭐", "Đánh giá ứng dụng", "Đánh giá 5 sao để ủng hộ chúng tôi"),
-    UtilityItem("ℹ️", "Giới thiệu", "Thông tin về TeachFlow", "about"),
-    UtilityItem("📞", "Liên hệ", "Hotline: 1900 1234")
+    UtilityItem(Icons.Rounded.Share, Color(0xFF2196F3), "Chia sẻ ứng dụng", "Giới thiệu TeachFlow cho bạn bè"),
+    UtilityItem(Icons.Rounded.Star, Color(0xFF2196F3), "Đánh giá ứng dụng", "Đánh giá 5 sao để ủng hộ chúng tôi"),
+    UtilityItem(Icons.Rounded.Info, Color(0xFF2196F3), "Giới thiệu", "Thông tin về TeachFlow", "about"),
+    UtilityItem(Icons.Rounded.Phone, Color(0xFF2196F3), "Liên hệ", "Hotline: 1900 1234")
 )
 
 val supports = listOf(
-    UtilityItem("❓", "Trợ giúp", "Hướng dẫn sử dụng"),
-    UtilityItem("💬", "Phản hồi", "Góp ý và báo lỗi"),
-    UtilityItem("🔒", "Chính sách bảo mật", "Điều khoản sử dụng")
+    UtilityItem(Icons.Rounded.Help, Color(0xFF2196F3), "Trợ giúp", "Hướng dẫn sử dụng"),
+    UtilityItem(Icons.Rounded.Feedback, Color(0xFF2196F3), "Phản hồi", "Góp ý và báo lỗi"),
+    UtilityItem(Icons.Rounded.Security, Color(0xFF2196F3), "Chính sách bảo mật", "Điều khoản sử dụng")
 )
 
 @Composable
@@ -1695,7 +1696,13 @@ fun UtilityCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(utility.icon, fontSize = 28.sp)
+            PremiumIconBox(
+                icon = utility.icon,
+                color = utility.color,
+                size = 44.dp,
+                iconSize = 22.dp,
+                shape = RoundedCornerShape(12.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = utility.title,
@@ -1730,49 +1737,25 @@ fun PremiumIconBox(
     Box(
         modifier = modifier
             .size(size)
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                spotColor = color.copy(alpha = 0.5f),
-                ambientColor = color.copy(alpha = 0.2f)
-            )
             .background(
                 brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors = listOf(color, color.copy(alpha = 0.7f)),
-                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                    end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                    colors = listOf(color.copy(alpha = 0.15f), color.copy(alpha = 0.05f)),
                 ),
                 shape = shape
             )
             .border(
                 width = 1.dp,
                 brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.5f), Color.Transparent),
-                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                    end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                    colors = listOf(color.copy(alpha = 0.3f), Color.Transparent),
                 ),
                 shape = shape
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Hiệu ứng Inner Glow
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(2.dp)
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.25f), Color.Transparent),
-                        radius = 120f
-                    ),
-                    shape = shape
-                )
-        )
-        
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color.White,
+            tint = color,
             modifier = Modifier.size(iconSize)
         )
     }
