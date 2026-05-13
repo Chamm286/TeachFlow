@@ -1,10 +1,7 @@
 package com.example.teachflow.ui.main
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -268,7 +265,8 @@ fun MainDashboard(
                 textPrimaryColor = textPrimaryColor,
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
+                showSnackbar = ::showSnackbar,
+                settingsViewModel = settingsViewModel
             )
         }
     }
@@ -1557,8 +1555,14 @@ fun MoreTab(
     textPrimaryColor: Color,
     textSecondaryColor: Color,
     textHintColor: Color,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    settingsViewModel: SettingsViewModel
 ) {
+    var showRatingDialog by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -1585,7 +1589,8 @@ fun MoreTab(
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
                 navController = navController,
-                showSnackbar = showSnackbar
+                showSnackbar = showSnackbar,
+                onAction = { showRatingDialog = true }
             )
         }
         
@@ -1607,12 +1612,37 @@ fun MoreTab(
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
                 navController = navController,
-                showSnackbar = showSnackbar
+                showSnackbar = showSnackbar,
+                onAction = {
+                    when (support.title) {
+                        "Trợ giúp" -> showHelpDialog = true
+                        "Phản hồi" -> showFeedbackDialog = true
+                        "Chính sách bảo mật" -> showPrivacyDialog = true
+                    }
+                }
             )
         }
         
         item {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { 
+                    navController.navigate("login")
+                    showSnackbar("👋 Đã đăng xuất khỏi hệ thống")
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFEBEE),
+                    contentColor = Color(0xFFD32F2F)
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Icon(Icons.Rounded.Logout, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Đăng xuất", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "TeachFlow v2026.1.0",
                 fontSize = 12.sp,
@@ -1630,6 +1660,205 @@ fun MoreTab(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+    
+    if (showRatingDialog) {
+        RatingDialog(
+            onDismiss = { showRatingDialog = false },
+            onSubmit = { stars, comment ->
+                showRatingDialog = false
+                showSnackbar("🌟 Cảm ơn bạn đã đánh giá $stars sao!")
+            },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor,
+            surfaceColor = surfaceColor
+        )
+    }
+    
+    if (showHelpDialog) {
+        HelpDialog(
+            onDismiss = { showHelpDialog = false },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+    
+    if (showFeedbackDialog) {
+        FeedbackDialog(
+            onDismiss = { showFeedbackDialog = false },
+            onSubmit = { feedback ->
+                showFeedbackDialog = false
+                showSnackbar("💬 Cảm ơn bạn! Chúng tôi đã nhận được phản hồi.")
+            },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+    
+    if (showPrivacyDialog) {
+        PrivacyDialog(
+            onDismiss = { showPrivacyDialog = false },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+}
+
+@Composable
+fun HelpDialog(
+    onDismiss: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Trợ giúp & FAQ", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                HelpItem("Cách đăng ký khóa học?", "Bạn vào tab Khám phá, chọn lớp học và nhấn Tham gia.", textPrimaryColor, textSecondaryColor)
+                HelpItem("Làm sao để xem điểm?", "Điểm số hiển thị ngay tại tab Cá nhân hoặc trong chi tiết lớp học.", textPrimaryColor, textSecondaryColor)
+                HelpItem("Quên mật khẩu?", "Tại màn hình đăng nhập, chọn 'Quên mật khẩu' để lấy lại qua Email.", textPrimaryColor, textSecondaryColor)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Đóng", color = primaryColor) }
+        }
+    )
+}
+
+@Composable
+fun HelpItem(q: String, a: String, textPrimaryColor: Color, textSecondaryColor: Color) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text("• $q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textPrimaryColor)
+        Text(a, fontSize = 13.sp, color = textSecondaryColor)
+    }
+}
+
+@Composable
+fun FeedbackDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    var feedback by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Gửi phản hồi", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column {
+                Text("Góp ý hoặc báo lỗi để chúng tôi hoàn thiện hơn.", fontSize = 14.sp, color = textSecondaryColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = feedback,
+                    onValueChange = { feedback = it },
+                    label = { Text("Nội dung phản hồi") },
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { if (feedback.isNotBlank()) onSubmit(feedback) }, colors = ButtonDefaults.buttonColors(containerColor = primaryColor)) {
+                Text("Gửi đi")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Hủy", color = textSecondaryColor) }
+        }
+    )
+}
+
+@Composable
+fun PrivacyDialog(
+    onDismiss: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Chính sách bảo mật", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    "Chào mừng bạn đến với TeachFlow. Chúng tôi cam kết bảo vệ thông tin cá nhân của bạn.\n\n" +
+                    "1. Thu thập dữ liệu: Chúng tôi thu thập thông tin khi bạn đăng ký và sử dụng dịch vụ.\n\n" +
+                    "2. Sử dụng thông tin: Dữ liệu được dùng để cải thiện trải nghiệm học tập và kết nối.\n\n" +
+                    "3. Bảo mật: Thông tin được mã hóa và bảo vệ an toàn trên hệ thống Firebase.\n\n" +
+                    "Sử dụng ứng dụng đồng nghĩa với việc bạn đồng ý với các điều khoản này.",
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = textSecondaryColor
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Tôi đã hiểu", color = primaryColor) }
+        }
+    )
+}
+
+@Composable
+fun RatingDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (Int, String) -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color,
+    surfaceColor: Color
+) {
+    var rating by remember { mutableStateOf(5) }
+    var comment by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Đánh giá ứng dụng", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Trải nghiệm của bạn thế nào?", fontSize = 14.sp, color = textSecondaryColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.Center) {
+                    (1..5).forEach { index ->
+                        IconButton(onClick = { rating = index }) {
+                            Icon(
+                                if (index <= rating) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                                contentDescription = null,
+                                tint = if (index <= rating) Color(0xFFFFB300) else textSecondaryColor,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = comment,
+                    onValueChange = { comment = it },
+                    label = { Text("Lời bình luận (không bắt buộc)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(rating, comment) },
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+            ) {
+                Text("Gửi đánh giá")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Để sau", color = textSecondaryColor)
+            }
+        }
+    )
 }
 
 data class UtilityItem(
@@ -1642,9 +1871,9 @@ data class UtilityItem(
 
 val utilities = listOf(
     UtilityItem(Icons.Rounded.Share, Color(0xFF2196F3), "Chia sẻ ứng dụng", "Giới thiệu TeachFlow cho bạn bè"),
-    UtilityItem(Icons.Rounded.Star, Color(0xFF2196F3), "Đánh giá ứng dụng", "Đánh giá 5 sao để ủng hộ chúng tôi"),
-    UtilityItem(Icons.Rounded.Info, Color(0xFF2196F3), "Giới thiệu", "Thông tin về TeachFlow", "about"),
-    UtilityItem(Icons.Rounded.Phone, Color(0xFF2196F3), "Liên hệ", "Hotline: 1900 1234")
+    UtilityItem(Icons.Rounded.Star, Color(0xFF2196F3), "Đánh giá ứng dụng", "Đánh giá 5 sao và để lại lời bình"),
+    UtilityItem(Icons.Rounded.Info, Color(0xFF2196F3), "Giới thiệu", "Nguyễn Công Đức & Nguyễn Thị Bính Trâm Developer", "about"),
+    UtilityItem(Icons.Rounded.Phone, Color(0xFF2196F3), "Liên hệ", "Hotline: 0334527953")
 )
 
 val supports = listOf(
@@ -1661,25 +1890,46 @@ fun UtilityCard(
     textSecondaryColor: Color,
     textHintColor: Color,
     navController: NavController,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    onAction: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 when {
+                    utility.title == "Đánh giá ứng dụng" || 
+                    utility.title == "Trợ giúp" || 
+                    utility.title == "Phản hồi" || 
+                    utility.title == "Chính sách bảo mật" -> {
+                        onAction()
+                    }
                     utility.route != null -> {
                         navController.navigate(utility.route)
-                        showSnackbar("📱 Đang mở: ")
+                        showSnackbar("📱 Đang mở: ${utility.title}")
                     }
                     utility.title == "Chia sẻ ứng dụng" -> {
-                        showSnackbar("📱 Tính năng chia sẻ đang phát triển")
+                        val sendIntent: android.content.Intent = android.content.Intent().apply {
+                            action = android.content.Intent.ACTION_SEND
+                            putExtra(android.content.Intent.EXTRA_TEXT, "Tải ngay TeachFlow 2026 - Nền tảng quản lý giáo dục thông minh: https://teachflow.com")
+                            type = "text/plain"
+                        }
+                        val shareIntent = android.content.Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
                     }
-                    utility.title == "Đánh giá ứng dụng" -> {
-                        showSnackbar("⭐ Cảm ơn bạn đã đánh giá TeachFlow!")
+                    utility.title == "Liên hệ" -> {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_DIAL).apply {
+                            data = android.net.Uri.parse("tel:0334527953")
+                        }
+                        context.startActivity(intent)
+                    }
+                    utility.title == "Phản hồi" -> {
+                        showSnackbar("💬 Cảm ơn bạn! Chúng tôi đã ghi nhận góp ý.")
                     }
                     else -> {
-                        showSnackbar("🚀 : ")
+                        showSnackbar("🚀 Tính năng ${utility.title} đang được xử lý")
                     }
                 }
             },

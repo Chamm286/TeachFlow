@@ -1,4 +1,4 @@
-﻿package com.example.teachflow.ui.about
+package com.example.teachflow.ui.about
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -101,9 +101,8 @@ fun AboutScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("• Nguyễn Văn A - Developer")
-                    Text("• Trần Thị B - Designer")
-                    Text("• Lê Văn C - Tester")
+                    Text("• Nguyễn Công Đức - Developer")
+                    Text("• Nguyễn Thị Bính Trâm - Developer")
                 }
             }
             
@@ -116,10 +115,11 @@ fun AboutScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "📧 Liên hệ",
+                        text = "📞 Liên hệ",
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    Text("Số điện thoại: 0334527953")
                     Text("Email: support@teachflow.com")
                     Text("Website: www.teachflow.com")
                 }
