@@ -1,4 +1,4 @@
-﻿package com.example.teachflow.navigation
+package com.example.teachflow.navigation
 
 sealed class Screen(val route: String) {
     // Onboarding & Auth
@@ -15,6 +15,7 @@ sealed class Screen(val route: String) {
     // Common
     object Settings : Screen("settings")
     object About : Screen("about")
+    object ClassDetail : Screen("class_detail/{title}")
     
     // Student
     object StudentDashboard : Screen("student_dashboard")

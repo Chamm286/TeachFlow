@@ -1,4 +1,4 @@
-﻿package com.example.teachflow.ui.auth.login
+package com.example.teachflow.ui.auth.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

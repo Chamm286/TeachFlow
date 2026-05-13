@@ -1,22 +1,22 @@
-﻿package com.example.teachflow.ui.main
+package com.example.teachflow.ui.main
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.pager.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.teachflow.navigation.Screen
 import com.example.teachflow.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
 
@@ -46,14 +47,16 @@ val DarkTextPrimary = Color(0xFFFFFFFF)
 val DarkTextSecondary = Color(0xFFB0B0B0)
 val DarkTextHint = Color(0xFF757575)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainDashboard(
     navController: NavController,
     viewModel: MainViewModel = viewModel(),
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
-    var selectedItem by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { 5 })
+    
     var showNotificationDialog by remember { mutableStateOf(false) }
     var showSnackbarMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -126,7 +129,7 @@ fun MainDashboard(
                             showSnackbar("📬 Bạn có  thông báo mới")
                         }) {
                             Icon(
-                                Icons.Default.Notifications,
+                                Icons.Rounded.Notifications,
                                 contentDescription = "Thông báo",
                                 tint = textSecondaryColor
                             )
@@ -147,7 +150,7 @@ fun MainDashboard(
                     IconButton(onClick = { 
                         showSnackbar("🔍 Tính năng tìm kiếm đang phát triển")
                     }) {
-                        Icon(Icons.Default.Search, contentDescription = "Tìm kiếm", tint = textSecondaryColor)
+                        Icon(Icons.Rounded.Search, contentDescription = "Tìm kiếm", tint = textSecondaryColor)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -161,31 +164,33 @@ fun MainDashboard(
                 tonalElevation = 8.dp
             ) {
                 val navItems = listOf(
-                    NavItem("Trang chủ", Icons.Default.Home, Icons.Default.Home),
-                    NavItem("Khám phá", Icons.Default.Explore, Icons.Default.Explore),
-                    NavItem("Tính năng", Icons.Default.Apps, Icons.Default.Apps),
-                    NavItem("Cá nhân", Icons.Default.Person, Icons.Default.Person),
-                    NavItem("Khác", Icons.Default.MoreHoriz, Icons.Default.MoreHoriz)
+                    NavItem("Trang chủ", Icons.Rounded.Home, Icons.Rounded.Home),
+                    NavItem("Khám phá", Icons.Rounded.Explore, Icons.Rounded.Explore),
+                    NavItem("Tính năng", Icons.Rounded.Widgets, Icons.Rounded.Widgets),
+                    NavItem("Cá nhân", Icons.Rounded.PersonOutline, Icons.Rounded.Person),
+                    NavItem("Khác", Icons.Rounded.GridView, Icons.Rounded.GridView)
                 )
                 
                 navItems.forEachIndexed { index, item ->
                     NavigationBarItem(
-                        selected = selectedItem == index,
+                        selected = pagerState.currentPage == index,
                         onClick = { 
-                            selectedItem = index
-                            showSnackbar("📱 Đã chuyển sang ")
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                            showSnackbar("📱 Đã chuyển sang ${item.title}")
                         },
                         icon = {
                             Icon(
-                                if (selectedItem == index) item.selectedIcon else item.icon,
+                                if (pagerState.currentPage == index) item.selectedIcon else item.icon,
                                 contentDescription = item.title,
-                                tint = if (selectedItem == index) primaryColor else textHintColor
+                                tint = if (pagerState.currentPage == index) primaryColor else textHintColor
                             )
                         },
                         label = {
                             Text(
                                 item.title,
-                                color = if (selectedItem == index) primaryColor else textHintColor,
+                                color = if (pagerState.currentPage == index) primaryColor else textHintColor,
                                 fontSize = 11.sp
                             )
                         },
@@ -203,70 +208,77 @@ fun MainDashboard(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = backgroundColor
     ) { paddingValues ->
-        when (selectedItem) {
-            0 -> HomeTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                stats = stats,
-                articles = articles,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            1 -> ExploreTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            2 -> FeaturesTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
-            3 -> ProfileTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar,
-                settingsViewModel = settingsViewModel
-            )
-            4 -> MoreTab(
-                navController = navController,
-                paddingValues = paddingValues,
-                primaryColor = primaryColor,
-                accentColor = accentColor,
-                backgroundColor = backgroundColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                showSnackbar = ::showSnackbar
-            )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(0.dp)
+        ) { pageIndex ->
+            when (pageIndex) {
+                0 -> HomeTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    stats = stats,
+                    articles = articles,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                1 -> ExploreTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                2 -> FeaturesTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar
+                )
+                3 -> ProfileTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar,
+                    settingsViewModel = settingsViewModel
+                )
+                4 -> MoreTab(
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    primaryColor = primaryColor,
+                    accentColor = accentColor,
+                    backgroundColor = backgroundColor,
+                    surfaceColor = surfaceColor,
+                    textPrimaryColor = textPrimaryColor,
+                    textSecondaryColor = textSecondaryColor,
+                    textHintColor = textHintColor,
+                    showSnackbar = ::showSnackbar,
+                    settingsViewModel = settingsViewModel
+                )
+            }
         }
     }
     
@@ -406,7 +418,7 @@ fun HomeTab(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 StatCard(
-                    icon = Icons.Default.People,
+                    icon = Icons.Rounded.PeopleAlt,
                     value = formatNumber(stats.totalUsers),
                     label = "Người dùng",
                     color = primaryColor,
@@ -417,7 +429,7 @@ fun HomeTab(
                     onClick = { showSnackbar("👥 Hiện có  người dùng TeachFlow") }
                 )
                 StatCard(
-                    icon = Icons.Default.School,
+                    icon = Icons.Rounded.School,
                     value = formatNumber(stats.totalClasses),
                     label = "Lớp học",
                     color = accentColor,
@@ -428,7 +440,7 @@ fun HomeTab(
                     onClick = { showSnackbar("📚 Đã có  lớp học trên hệ thống") }
                 )
                 StatCard(
-                    icon = Icons.Default.Star,
+                    icon = Icons.Rounded.StarRate,
                     value = "",
                     label = "Đánh giá",
                     color = Color(0xFFFFC107),
@@ -444,7 +456,7 @@ fun HomeTab(
         // Danh mục nhanh
         item {
             SectionHeader(
-                title = "🚀 Danh mục nhanh",
+                title = "Danh mục nhanh",
                 action = "Xem tất cả",
                 onAction = { showSnackbar("📋 Danh sách danh mục đang cập nhật") },
                 textPrimaryColor = textPrimaryColor,
@@ -462,6 +474,7 @@ fun HomeTab(
                         category = category,
                         surfaceColor = surfaceColor,
                         textPrimaryColor = textPrimaryColor,
+                        primaryColor = primaryColor,
                         onClick = { showSnackbar("📱 Đang chuyển đến ") }
                     )
                 }
@@ -471,7 +484,7 @@ fun HomeTab(
         // Bài viết nổi bật
         item {
             SectionHeader(
-                title = "📝 Bài viết nổi bật",
+                title = "Bài viết nổi bật",
                 action = "Xem thêm",
                 onAction = { showSnackbar("📖 Danh sách bài viết đang cập nhật") },
                 textPrimaryColor = textPrimaryColor,
@@ -523,14 +536,15 @@ fun StatCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(28.dp)
+            PremiumIconBox(
+                icon = icon,
+                color = color,
+                size = 48.dp,
+                iconSize = 24.dp,
+                shape = RoundedCornerShape(14.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -549,18 +563,19 @@ fun StatCard(
 }
 
 data class QuickCategory(
-    val icon: String,
+    val icon: ImageVector,
     val name: String,
+    val color: Color,
     val route: String? = null
 )
 
 val quickCategories = listOf(
-    QuickCategory("👨‍🏫", "Giáo viên"),
-    QuickCategory("👨‍🎓", "Học sinh"),
-    QuickCategory("📊", "Bảng điểm"),
-    QuickCategory("📅", "Lịch học"),
-    QuickCategory("💬", "Tin nhắn"),
-    QuickCategory("📁", "Tài liệu")
+    QuickCategory(Icons.Rounded.SupervisedUserCircle, "Giáo viên", Color(0xFF4CAF50)),
+    QuickCategory(Icons.Rounded.Face, "Học sinh", Color(0xFF2196F3)),
+    QuickCategory(Icons.Rounded.Assessment, "Bảng điểm", Color(0xFFFF9800)),
+    QuickCategory(Icons.Rounded.CalendarMonth, "Lịch học", Color(0xFFE91E63)),
+    QuickCategory(Icons.Rounded.Forum, "Tin nhắn", Color(0xFF9C27B0)),
+    QuickCategory(Icons.Rounded.FolderOpen, "Tài liệu", Color(0xFF00BCD4))
 )
 
 @Composable
@@ -568,6 +583,7 @@ fun QuickCategoryCard(
     category: QuickCategory,
     surfaceColor: Color,
     textPrimaryColor: Color,
+    primaryColor: Color,
     onClick: () -> Unit
 ) {
     Card(
@@ -581,10 +597,16 @@ fun QuickCategoryCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(category.icon, fontSize = 32.sp)
+            PremiumIconBox(
+                icon = category.icon,
+                color = category.color,
+                size = 48.dp,
+                iconSize = 26.dp,
+                shape = CircleShape
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = category.name,
@@ -622,15 +644,13 @@ fun FeaturedArticleCard(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = primaryColor.copy(alpha = 0.1f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("📄", fontSize = 24.sp)
-                }
-            }
+            PremiumIconBox(
+                icon = Icons.Rounded.Article,
+                color = primaryColor,
+                size = 52.dp,
+                iconSize = 26.dp,
+                shape = RoundedCornerShape(14.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = article.title,
@@ -662,7 +682,7 @@ fun FeaturedArticleCard(
                 }
             }
             Icon(
-                Icons.Default.ChevronRight,
+                Icons.Rounded.ChevronRight,
                 contentDescription = null,
                 tint = textHintColor
             )
@@ -692,7 +712,13 @@ fun TipOfTheDay(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("💡", fontSize = 32.sp)
+            PremiumIconBox(
+                icon = Icons.Rounded.Lightbulb,
+                color = Color(0xFFFFC107),
+                size = 48.dp,
+                iconSize = 28.dp,
+                shape = CircleShape
+            )
             Column {
                 Text(
                     text = "Mẹo hôm nay",
@@ -776,12 +802,13 @@ fun ExploreTab(
         item {
             Text(
                 text = "✨ Khám phá",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = textPrimaryColor
+                fontSize = 32.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = textPrimaryColor,
+                letterSpacing = (-0.5).sp
             )
             Text(
-                text = "Tính năng và dịch vụ mới nhất",
+                text = "Cập nhật xu hướng giáo dục mới nhất",
                 fontSize = 14.sp,
                 color = textSecondaryColor
             )
@@ -792,36 +819,53 @@ fun ExploreTab(
                 surfaceColor = surfaceColor,
                 textHintColor = textHintColor,
                 primaryColor = primaryColor,
-                onSearch = { showSnackbar("🔍 Đang tìm kiếm: ") }
+                onSearch = { showSnackbar("🔍 Đang tìm kiếm: $it") }
             )
         }
         
         item {
             SectionHeader(
-                title = "🎯 Gợi ý cho bạn",
-                action = "Xem thêm",
+                title = "Gợi ý cho bạn",
+                action = "Xem tất cả",
                 onAction = { showSnackbar("📋 Xem thêm gợi ý") },
                 textPrimaryColor = textPrimaryColor,
                 primaryColor = primaryColor
             )
         }
         
-        items(exploreItems) { item ->
-            ExploreCard(
-                item = item,
-                primaryColor = primaryColor,
-                surfaceColor = surfaceColor,
-                textPrimaryColor = textPrimaryColor,
-                textSecondaryColor = textSecondaryColor,
-                textHintColor = textHintColor,
-                onClick = { showSnackbar("🚀 Đang mở: ") }
-            )
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                exploreItems.chunked(2).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowItems.forEach { item ->
+                            ExploreGridCard(
+                                item = item,
+                                primaryColor = primaryColor,
+                                surfaceColor = surfaceColor,
+                                textPrimaryColor = textPrimaryColor,
+                                textSecondaryColor = textSecondaryColor,
+                                modifier = Modifier.weight(1f),
+                                onClick = { 
+                                    navController.navigate("class_detail/${item.title}")
+                                }
+                            )
+                        }
+                        if (rowItems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
         }
         
         item {
+            Spacer(modifier = Modifier.height(8.dp))
             SectionHeader(
-                title = "🏆 Khóa học phổ biến",
-                action = "Xem tất cả",
+                title = "Khóa học phổ biến",
+                action = "Khám phá",
                 onAction = { showSnackbar("📚 Danh sách khóa học") },
                 textPrimaryColor = textPrimaryColor,
                 primaryColor = primaryColor
@@ -836,7 +880,9 @@ fun ExploreTab(
                 textPrimaryColor = textPrimaryColor,
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
-                onClick = { showSnackbar("📖 Đang mở khóa học: ") }
+                onClick = { 
+                    navController.navigate("class_detail/${course.title}")
+                }
             )
         }
     }
@@ -852,39 +898,63 @@ fun SearchBarExplore(
     var searchText by remember { mutableStateOf("") }
     
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp),
         color = surfaceColor,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Search, contentDescription = null, tint = textHintColor)
-            TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = { Text("Tìm kiếm khóa học, bài viết...", color = textHintColor) },
-                modifier = Modifier.weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                singleLine = true
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = textHintColor,
+                modifier = Modifier.size(20.dp)
             )
+            
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (searchText.isEmpty()) {
+                    Text(
+                        text = "Tìm kiếm khóa học, bài viết...",
+                        color = textHintColor,
+                        fontSize = 14.sp
+                    )
+                }
+                
+                androidx.compose.foundation.text.BasicTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = if (androidx.compose.foundation.isSystemInDarkTheme()) Color.White else Color.Black,
+                        fontSize = 14.sp
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
             if (searchText.isNotEmpty()) {
-                IconButton(onClick = { 
-                    onSearch(searchText)
-                    searchText = ""
-                }) {
-                    Icon(Icons.Default.ArrowForward, contentDescription = "Tìm kiếm", tint = primaryColor)
+                IconButton(
+                    onClick = { 
+                        onSearch(searchText)
+                        searchText = ""
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Rounded.ArrowForward, contentDescription = "Tìm kiếm", tint = primaryColor, modifier = Modifier.size(20.dp))
                 }
             } else {
-                Icon(Icons.Default.Tune, contentDescription = null, tint = textHintColor)
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = null,
+                    tint = textHintColor,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
@@ -893,68 +963,66 @@ fun SearchBarExplore(
 data class ExploreItem(
     val title: String,
     val description: String,
-    val icon: String
+    val icon: ImageVector,
+    val color: Color
 )
 
 val exploreItems = listOf(
-    ExploreItem("Lớp học thông minh", "Quản lý lớp học với công nghệ AI", "🤖"),
-    ExploreItem("Bảng điểm tự động", "Nhập điểm và tính toán tự động", "📊"),
-    ExploreItem("Thống kê chi tiết", "Biểu đồ phân tích kết quả học tập", "📈"),
-    ExploreItem("Thông báo tức thì", "Gửi thông báo đến phụ huynh", "🔔")
+    ExploreItem("Lớp học AI", "Công nghệ giảng dạy 4.0", Icons.Rounded.AutoAwesome, Color(0xFF6366F1)),
+    ExploreItem("Phân tích", "Theo dõi tiến độ học tập", Icons.Rounded.Insights, Color(0xFFEC4899)),
+    ExploreItem("Tương tác", "Kết nối thầy cô & bạn bè", Icons.Rounded.Groups, Color(0xFF8B5CF6)),
+    ExploreItem("Lịch trình", "Quản lý thời gian tối ưu", Icons.Rounded.EventAvailable, Color(0xFF10B981))
 )
 
 @Composable
-fun ExploreCard(
+fun ExploreGridCard(
     item: ExploreItem,
     primaryColor: Color,
     surfaceColor: Color,
     textPrimaryColor: Color,
     textSecondaryColor: Color,
-    textHintColor: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .height(160.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = surfaceColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = primaryColor.copy(alpha = 0.1f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(item.icon, fontSize = 24.sp)
-                }
-            }
-            Column(modifier = Modifier.weight(1f)) {
+            PremiumIconBox(
+                icon = item.icon,
+                color = item.color,
+                size = 52.dp,
+                iconSize = 26.dp,
+                shape = RoundedCornerShape(16.dp)
+            )
+            
+            Column {
                 Text(
                     text = item.title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textPrimaryColor
+                    color = textPrimaryColor,
+                    lineHeight = 18.sp
                 )
                 Text(
                     text = item.description,
-                    fontSize = 12.sp,
-                    color = textSecondaryColor
+                    fontSize = 11.sp,
+                    color = textSecondaryColor,
+                    maxLines = 1
                 )
             }
-            Icon(
-                Icons.Default.ArrowForward,
-                contentDescription = null,
-                tint = textHintColor
-            )
         }
     }
 }
@@ -963,14 +1031,15 @@ data class PopularCourse(
     val title: String,
     val students: Int,
     val rating: Double,
-    val icon: String
+    val icon: ImageVector,
+    val color: Color
 )
 
 val popularCourses = listOf(
-    PopularCourse("Toán cao cấp", 1240, 4.8, "📐"),
-    PopularCourse("Lập trình Android", 980, 4.9, "📱"),
-    PopularCourse("Tiếng Anh giao tiếp", 2100, 4.7, "🇬🇧"),
-    PopularCourse("Kỹ năng mềm", 560, 4.6, "💼")
+    PopularCourse("Toán học Logic", 1240, 4.8, Icons.Rounded.Functions, Color(0xFF3F51B5)),
+    PopularCourse("Lập trình Mobile", 980, 4.9, Icons.Rounded.Terminal, Color(0xFF4CAF50)),
+    PopularCourse("Văn hóa Toàn cầu", 2100, 4.7, Icons.Rounded.Public, Color(0xFFE91E63)),
+    PopularCourse("Kỹ năng Lãnh đạo", 560, 4.6, Icons.Rounded.MilitaryTech, Color(0xFFFF9800))
 )
 
 @Composable
@@ -998,7 +1067,13 @@ fun CourseCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(course.icon, fontSize = 32.sp)
+            PremiumIconBox(
+                icon = course.icon,
+                color = course.color,
+                size = 56.dp,
+                iconSize = 28.dp,
+                shape = RoundedCornerShape(16.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = course.title,
@@ -1008,10 +1083,17 @@ fun CourseCard(
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    Text("👥 ", fontSize = 11.sp, color = textSecondaryColor)
-                    Text("⭐ ", fontSize = 11.sp, color = Color(0xFFFFC107))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Rounded.People, contentDescription = null, tint = textSecondaryColor, modifier = Modifier.size(14.dp))
+                        Text("${course.students}", fontSize = 11.sp, color = textSecondaryColor)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Rounded.StarRate, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
+                        Text("${course.rating}", fontSize = 11.sp, color = Color(0xFFFFC107))
+                    }
                 }
             }
             Surface(
@@ -1053,7 +1135,7 @@ fun FeaturesTab(
     ) {
         item {
             Text(
-                text = "⚡ Tính năng nổi bật",
+                text = "Tính năng nổi bật",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = textPrimaryColor
@@ -1223,7 +1305,7 @@ fun ProfileTab(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Surface(
@@ -1267,7 +1349,7 @@ fun ProfileTab(
         
         item {
             SectionHeader(
-                title = "📊 Thống kê cá nhân",
+                title = "Thống kê cá nhân",
                 action = "Chi tiết",
                 onAction = { showSnackbar("📈 Thống kê chi tiết đang cập nhật") },
                 textPrimaryColor = textPrimaryColor,
@@ -1312,7 +1394,7 @@ fun ProfileTab(
         
         item {
             SectionHeader(
-                title = "⚙️ Cài đặt",
+                title = "Cài đặt",
                 action = null,
                 onAction = {},
                 textPrimaryColor = textPrimaryColor,
@@ -1349,8 +1431,8 @@ fun ProfileTab(
                 textPrimaryColor = textPrimaryColor,
                 primaryColor = primaryColor,
                 textHintColor = textHintColor,
-                onToggle = { showSnackbar("⚙️ Cài đặt  đang được cập nhật") },
-                onClick = { if (!setting.hasSwitch) showSnackbar("⚙️ Đang mở cài đặt ") }
+                onToggle = { showSnackbar("⚙️ Cài đặt đang được cập nhật") },
+                onClick = { if (!setting.hasSwitch) showSnackbar("⚙️ Đang mở cài đặt") }
             )
         }
     }
@@ -1375,7 +1457,7 @@ fun PersonalStatCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -1484,8 +1566,14 @@ fun MoreTab(
     textPrimaryColor: Color,
     textSecondaryColor: Color,
     textHintColor: Color,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    settingsViewModel: SettingsViewModel
 ) {
+    var showRatingDialog by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -1496,7 +1584,7 @@ fun MoreTab(
     ) {
         item {
             Text(
-                text = "📌 Tiện ích",
+                text = "Tiện ích mở rộng",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = textPrimaryColor,
@@ -1512,13 +1600,14 @@ fun MoreTab(
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
                 navController = navController,
-                showSnackbar = showSnackbar
+                showSnackbar = showSnackbar,
+                onAction = { showRatingDialog = true }
             )
         }
         
         item {
             Text(
-                text = "❤️ Hỗ trợ",
+                text = "Hỗ trợ & Thông tin",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = textPrimaryColor,
@@ -1534,12 +1623,37 @@ fun MoreTab(
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
                 navController = navController,
-                showSnackbar = showSnackbar
+                showSnackbar = showSnackbar,
+                onAction = {
+                    when (support.title) {
+                        "Trợ giúp" -> showHelpDialog = true
+                        "Phản hồi" -> showFeedbackDialog = true
+                        "Chính sách bảo mật" -> showPrivacyDialog = true
+                    }
+                }
             )
         }
         
         item {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { 
+                    navController.navigate("login")
+                    showSnackbar("👋 Đã đăng xuất khỏi hệ thống")
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFEBEE),
+                    contentColor = Color(0xFFD32F2F)
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Icon(Icons.Rounded.Logout, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Đăng xuất", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "TeachFlow v2026.1.0",
                 fontSize = 12.sp,
@@ -1557,26 +1671,226 @@ fun MoreTab(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+    
+    if (showRatingDialog) {
+        RatingDialog(
+            onDismiss = { showRatingDialog = false },
+            onSubmit = { stars, comment ->
+                showRatingDialog = false
+                showSnackbar("🌟 Cảm ơn bạn đã đánh giá $stars sao!")
+            },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor,
+            surfaceColor = surfaceColor
+        )
+    }
+    
+    if (showHelpDialog) {
+        HelpDialog(
+            onDismiss = { showHelpDialog = false },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+    
+    if (showFeedbackDialog) {
+        FeedbackDialog(
+            onDismiss = { showFeedbackDialog = false },
+            onSubmit = { feedback ->
+                showFeedbackDialog = false
+                showSnackbar("💬 Cảm ơn bạn! Chúng tôi đã nhận được phản hồi.")
+            },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+    
+    if (showPrivacyDialog) {
+        PrivacyDialog(
+            onDismiss = { showPrivacyDialog = false },
+            primaryColor = primaryColor,
+            textPrimaryColor = textPrimaryColor,
+            textSecondaryColor = textSecondaryColor
+        )
+    }
+}
+
+@Composable
+fun HelpDialog(
+    onDismiss: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Trợ giúp & FAQ", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                HelpItem("Cách đăng ký khóa học?", "Bạn vào tab Khám phá, chọn lớp học và nhấn Tham gia.", textPrimaryColor, textSecondaryColor)
+                HelpItem("Làm sao để xem điểm?", "Điểm số hiển thị ngay tại tab Cá nhân hoặc trong chi tiết lớp học.", textPrimaryColor, textSecondaryColor)
+                HelpItem("Quên mật khẩu?", "Tại màn hình đăng nhập, chọn 'Quên mật khẩu' để lấy lại qua Email.", textPrimaryColor, textSecondaryColor)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Đóng", color = primaryColor) }
+        }
+    )
+}
+
+@Composable
+fun HelpItem(q: String, a: String, textPrimaryColor: Color, textSecondaryColor: Color) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text("• $q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textPrimaryColor)
+        Text(a, fontSize = 13.sp, color = textSecondaryColor)
+    }
+}
+
+@Composable
+fun FeedbackDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    var feedback by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Gửi phản hồi", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column {
+                Text("Góp ý hoặc báo lỗi để chúng tôi hoàn thiện hơn.", fontSize = 14.sp, color = textSecondaryColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = feedback,
+                    onValueChange = { feedback = it },
+                    label = { Text("Nội dung phản hồi") },
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { if (feedback.isNotBlank()) onSubmit(feedback) }, colors = ButtonDefaults.buttonColors(containerColor = primaryColor)) {
+                Text("Gửi đi")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Hủy", color = textSecondaryColor) }
+        }
+    )
+}
+
+@Composable
+fun PrivacyDialog(
+    onDismiss: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Chính sách bảo mật", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    "Chào mừng bạn đến với TeachFlow. Chúng tôi cam kết bảo vệ thông tin cá nhân của bạn.\n\n" +
+                    "1. Thu thập dữ liệu: Chúng tôi thu thập thông tin khi bạn đăng ký và sử dụng dịch vụ.\n\n" +
+                    "2. Sử dụng thông tin: Dữ liệu được dùng để cải thiện trải nghiệm học tập và kết nối.\n\n" +
+                    "3. Bảo mật: Thông tin được mã hóa và bảo vệ an toàn trên hệ thống Firebase.\n\n" +
+                    "Sử dụng ứng dụng đồng nghĩa với việc bạn đồng ý với các điều khoản này.",
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = textSecondaryColor
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Tôi đã hiểu", color = primaryColor) }
+        }
+    )
+}
+
+@Composable
+fun RatingDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (Int, String) -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color,
+    surfaceColor: Color
+) {
+    var rating by remember { mutableStateOf(5) }
+    var comment by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Đánh giá ứng dụng", fontWeight = FontWeight.Bold, color = textPrimaryColor) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Trải nghiệm của bạn thế nào?", fontSize = 14.sp, color = textSecondaryColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.Center) {
+                    (1..5).forEach { index ->
+                        IconButton(onClick = { rating = index }) {
+                            Icon(
+                                if (index <= rating) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                                contentDescription = null,
+                                tint = if (index <= rating) Color(0xFFFFB300) else textSecondaryColor,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = comment,
+                    onValueChange = { comment = it },
+                    label = { Text("Lời bình luận (không bắt buộc)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(rating, comment) },
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+            ) {
+                Text("Gửi đánh giá")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Để sau", color = textSecondaryColor)
+            }
+        }
+    )
 }
 
 data class UtilityItem(
-    val icon: String,
+    val icon: ImageVector,
+    val color: Color,
     val title: String,
     val description: String,
     val route: String? = null
 )
 
 val utilities = listOf(
-    UtilityItem("📱", "Chia sẻ ứng dụng", "Giới thiệu TeachFlow cho bạn bè"),
-    UtilityItem("⭐", "Đánh giá ứng dụng", "Đánh giá 5 sao để ủng hộ chúng tôi"),
-    UtilityItem("ℹ️", "Giới thiệu", "Thông tin về TeachFlow", "about"),
-    UtilityItem("📞", "Liên hệ", "Hotline: 1900 1234")
+    UtilityItem(Icons.Rounded.Share, Color(0xFF2196F3), "Chia sẻ ứng dụng", "Giới thiệu TeachFlow cho bạn bè"),
+    UtilityItem(Icons.Rounded.Star, Color(0xFF2196F3), "Đánh giá ứng dụng", "Đánh giá 5 sao và để lại lời bình"),
+    UtilityItem(Icons.Rounded.Info, Color(0xFF2196F3), "Giới thiệu", "Nguyễn Công Đức & Nguyễn Thị Bính Trâm Developer", "about"),
+    UtilityItem(Icons.Rounded.Phone, Color(0xFF2196F3), "Liên hệ", "Hotline: 0334527953")
 )
 
 val supports = listOf(
-    UtilityItem("❓", "Trợ giúp", "Hướng dẫn sử dụng"),
-    UtilityItem("💬", "Phản hồi", "Góp ý và báo lỗi"),
-    UtilityItem("🔒", "Chính sách bảo mật", "Điều khoản sử dụng")
+    UtilityItem(Icons.Rounded.Help, Color(0xFF2196F3), "Trợ giúp", "Hướng dẫn sử dụng"),
+    UtilityItem(Icons.Rounded.Feedback, Color(0xFF2196F3), "Phản hồi", "Góp ý và báo lỗi"),
+    UtilityItem(Icons.Rounded.Security, Color(0xFF2196F3), "Chính sách bảo mật", "Điều khoản sử dụng")
 )
 
 @Composable
@@ -1587,25 +1901,46 @@ fun UtilityCard(
     textSecondaryColor: Color,
     textHintColor: Color,
     navController: NavController,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    onAction: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 when {
+                    utility.title == "Đánh giá ứng dụng" || 
+                    utility.title == "Trợ giúp" || 
+                    utility.title == "Phản hồi" || 
+                    utility.title == "Chính sách bảo mật" -> {
+                        onAction()
+                    }
                     utility.route != null -> {
                         navController.navigate(utility.route)
-                        showSnackbar("📱 Đang mở: ")
+                        showSnackbar("📱 Đang mở: ${utility.title}")
                     }
                     utility.title == "Chia sẻ ứng dụng" -> {
-                        showSnackbar("📱 Tính năng chia sẻ đang phát triển")
+                        val sendIntent: android.content.Intent = android.content.Intent().apply {
+                            action = android.content.Intent.ACTION_SEND
+                            putExtra(android.content.Intent.EXTRA_TEXT, "Tải ngay TeachFlow 2026 - Nền tảng quản lý giáo dục thông minh: https://teachflow.com")
+                            type = "text/plain"
+                        }
+                        val shareIntent = android.content.Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
                     }
-                    utility.title == "Đánh giá ứng dụng" -> {
-                        showSnackbar("⭐ Cảm ơn bạn đã đánh giá TeachFlow!")
+                    utility.title == "Liên hệ" -> {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_DIAL).apply {
+                            data = android.net.Uri.parse("tel:0334527953")
+                        }
+                        context.startActivity(intent)
+                    }
+                    utility.title == "Phản hồi" -> {
+                        showSnackbar("💬 Cảm ơn bạn! Chúng tôi đã ghi nhận góp ý.")
                     }
                     else -> {
-                        showSnackbar("🚀 : ")
+                        showSnackbar("🚀 Tính năng ${utility.title} đang được xử lý")
                     }
                 }
             },
@@ -1622,7 +1957,13 @@ fun UtilityCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(utility.icon, fontSize = 28.sp)
+            PremiumIconBox(
+                icon = utility.icon,
+                color = utility.color,
+                size = 44.dp,
+                iconSize = 22.dp,
+                shape = RoundedCornerShape(12.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = utility.title,
@@ -1642,5 +1983,41 @@ fun UtilityCard(
                 tint = textHintColor
             )
         }
+    }
+}
+
+@Composable
+fun PremiumIconBox(
+    icon: ImageVector,
+    color: Color,
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 48.dp,
+    iconSize: androidx.compose.ui.unit.Dp = 24.dp,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(14.dp)
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(color.copy(alpha = 0.15f), color.copy(alpha = 0.05f)),
+                ),
+                shape = shape
+            )
+            .border(
+                width = 1.dp,
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(color.copy(alpha = 0.3f), Color.Transparent),
+                ),
+                shape = shape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(iconSize)
+        )
     }
 }
