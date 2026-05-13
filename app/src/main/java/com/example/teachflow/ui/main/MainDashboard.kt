@@ -884,39 +884,63 @@ fun SearchBarExplore(
     var searchText by remember { mutableStateOf("") }
     
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp),
         color = surfaceColor,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Rounded.Search, contentDescription = null, tint = textHintColor)
-            TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = { Text("Tìm kiếm khóa học, bài viết...", color = textHintColor) },
-                modifier = Modifier.weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                singleLine = true
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = textHintColor,
+                modifier = Modifier.size(20.dp)
             )
+            
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (searchText.isEmpty()) {
+                    Text(
+                        text = "Tìm kiếm khóa học, bài viết...",
+                        color = textHintColor,
+                        fontSize = 14.sp
+                    )
+                }
+                
+                androidx.compose.foundation.text.BasicTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = if (androidx.compose.foundation.isSystemInDarkTheme()) Color.White else Color.Black,
+                        fontSize = 14.sp
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
             if (searchText.isNotEmpty()) {
-                IconButton(onClick = { 
-                    onSearch(searchText)
-                    searchText = ""
-                }) {
-                    Icon(Icons.Rounded.ArrowForward, contentDescription = "Tìm kiếm", tint = primaryColor)
+                IconButton(
+                    onClick = { 
+                        onSearch(searchText)
+                        searchText = ""
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Rounded.ArrowForward, contentDescription = "Tìm kiếm", tint = primaryColor, modifier = Modifier.size(20.dp))
                 }
             } else {
-                Icon(Icons.Rounded.Tune, contentDescription = null, tint = textHintColor)
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = null,
+                    tint = textHintColor,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
