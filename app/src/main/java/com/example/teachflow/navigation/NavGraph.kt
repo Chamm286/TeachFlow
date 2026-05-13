@@ -1,4 +1,4 @@
-﻿package com.example.teachflow.navigation
+package com.example.teachflow.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -125,6 +125,20 @@ fun NavGraph(
         // About
         composable(Screen.About.route) {
             AboutScreen(navController = navController)
+        }
+
+        // Class Detail
+        composable(
+            route = Screen.ClassDetail.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            com.example.teachflow.ui.course.CourseDetailScreen(
+                navController = navController,
+                courseTitle = title
+            )
         }
     }
 }

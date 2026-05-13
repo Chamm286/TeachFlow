@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.teachflow.navigation.Screen
 import com.example.teachflow.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
 
@@ -838,7 +839,9 @@ fun ExploreTab(
                                 textPrimaryColor = textPrimaryColor,
                                 textSecondaryColor = textSecondaryColor,
                                 modifier = Modifier.weight(1f),
-                                onClick = { showSnackbar("🚀 Đang mở: ${item.title}") }
+                                onClick = { 
+                                    navController.navigate("class_detail/${item.title}")
+                                }
                             )
                         }
                         if (rowItems.size == 1) {
@@ -868,7 +871,9 @@ fun ExploreTab(
                 textPrimaryColor = textPrimaryColor,
                 textSecondaryColor = textSecondaryColor,
                 textHintColor = textHintColor,
-                onClick = { showSnackbar("📖 Đang mở khóa học: ${course.title}") }
+                onClick = { 
+                    navController.navigate("class_detail/${course.title}")
+                }
             )
         }
     }
